@@ -1,3 +1,5 @@
+![example_cover](https://github.com/DominikWidomski/bot-landscape-generator/blob/master/resources/images/cover_1.jpg)
+
 # Bot: landscape generator
 
 Parametrically generate landscape image
