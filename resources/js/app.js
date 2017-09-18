@@ -1,4 +1,6 @@
-const Rainbow = require('rainbowvis.js');
+import Rainbow from 'rainbowvis.js';
+import StarField from './entities/star-field';
+import Planet from './entities/planet';
 
 const canvas = document.querySelector('canvas');
 const ctx = window.ctx = canvas.getContext('2d');
@@ -8,6 +10,23 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 function progress(from, to, current) {
 	return 1 - ((to - current) / (to - from));
+}
+
+/**
+ * 2D distance
+ *
+ * @param {Number} x1
+ * @param {Number} y1
+ * @param {Number} x2
+ * @param {Number} y2
+ *
+ * @return {Number}
+ */
+function distance(x1, y1, x2, y2) {
+	const xD = x2 - x1;
+	const yD = y2 - y1;
+
+	return Math.sqrt((xD * xD) + (yD * yD));
 }
 
 function drawVerticalGradient(cFrom, cTo, from, to, lineStep = 50) {
@@ -51,60 +70,6 @@ function mountains(color, horizonX, start, end, slope = 0, slopeMin = 0) {
 	}
 }
 
-const sunR = 40;
-
-function drawSun(x, y, horizonY) {
-	const r = sunR;
-	const lineHeight = 4;
-	
-	// force to integers to avoid subpixel blending
-	x = x | 0;
-	y = y | 0;
-	
-	// ctx.strokeStyle = '#FAFAC8';
-	ctx.fillStyle = '#FAFAC8';
-
-	for (let _y = -r; _y < r; _y += lineHeight) {
-		const _x = Math.sqrt((r * r) - (_y * _y));
-
-		const left = x - _x;
-		const top = y + _y;
-		const width = (x + _x) - left;
-		const height = lineHeight;
-		ctx.fillRect(left, top, width, height);
-	}
-
-	ctx.strokeStyle = '#FAAAC8';
-	ctx.beginPath();
-	ctx.arc(x,y,r,0,2*Math.PI);
-	ctx.stroke();
-}
-
-function drawSunReflection(x, y, horizonY) {
-	const r = sunR;
-
-	ctx.strokeStyle = '#FAFAC8';
-	ctx.fillStyle = '#FAFAC8';
-
-	const numLines = 20;
-	y = horizonY + (horizonY - y);
-
-	for (let i = 0; i <= numLines; i++) {
-		const _y = -r + (i * 2 * r) / numLines;
-		const _x = Math.sqrt((r * r) - (_y * _y)) + (Math.sin(i * 2) * 10) ;
-
-		// Don't draw above horizon
-		if (y + _y < horizonY) {
-			continue;
-		}
-
-		ctx.beginPath();
-		ctx.moveTo(x + _x, y + _y);
-		ctx.lineTo(x - _x, y + _y);
-		ctx.stroke();
-	}
-}
-
 function building(color, x, y, w, h) {
 	const spacing = 10;
 	const size = 5;
@@ -134,59 +99,22 @@ function drawBuildings(colorRange, startX, n = 1) {
 	}
 }
 
-const stars = [];
-function generateStars() {
-	for (let i = 0; i < 20; ++i) {
-		const x = Math.random() * canvas.width | 0;
-		const y = Math.random() * HORIZON | 0;
-
-		stars.push([x, y]);
-	}
-}
-
-function moveStars() {
-	for (let i = 0; i < stars.length; ++i) {
-		const [x, y] = stars[i];
-		stars[i] = [
-			(x + 1) % canvas.width,
-			(y + 2) % canvas.height
-		];
-	}
-}
-
-function drawStars() {
-	ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-
-	for (let i = 0; i < stars.length; ++i) {
-		const [x, y] = stars[i];
-
-		ctx.fillRect(x, y, 4, 4);
-	}
-}
-
-function drawStarsReflection(horizon = HORIZON) {
-	ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-
-	for (let i = 0; i < stars.length; ++i) {
-		const [x, y] = stars[i];
-		// Reflected y coord
-		const _y = horizon + (horizon - y);
-
-		// @TODO: Doesn't make them clip, makes them not render completely ofcs
-		if (_y > horizon) {
-			ctx.fillRect(x, _y, 4, 4);
-		}
-	}
-}
-
 function drawClouds() {
 	const palette = new Rainbow();
 	palette.setSpectrum('#006655', '#EE6644');
 
 	for (let y = 0; y < HORIZON; ++y) {
-		if (Math.random() > 0.9) {
+		if (Math.random() > 0.95) {
+			const x = Math.random() * canvas.width | 0;
+
 			ctx.fillStyle = '#' + palette.colorAt(progress(0, HORIZON, y) * 100);
-			ctx.fillRect(Math.random() * canvas.width | 0, y, canvas.width * 0.4, 10);
+			ctx.fillRect(x, y, Math.random() * canvas.width * 0.4, 10);
+
+			if (Math.random() > 0.5) {
+				const p = progress(0, HORIZON, y)
+				ctx.fillStyle = '#' + palette.colorAt(p * 100 + (100 - (p * 100) * 0.5));
+				ctx.fillRect(x, y + 6, Math.random() * canvas.width * 0.4, 4);
+			}
 		}
 	}
 }
@@ -194,7 +122,29 @@ function drawClouds() {
 const HORIZON_LINE = 0.7;
 const HORIZON = canvas.height * HORIZON_LINE;
 
-generateStars();
+
+const starField = new StarField({
+	n: 20,
+	width: canvas.width,
+	height: canvas.height,
+	horizon: HORIZON
+});
+
+const sun = new Planet({
+	r: 40,
+	x: canvas.width * (Math.random() * 0.15 + 0.2),
+	y: canvas.height * (Math.random() * 0.5 + 0.2),
+	horizon: HORIZON,
+});
+
+const moon = new Planet({
+	r: 20,
+	x: canvas.width * (Math.random() * 0.15 + 0.2),
+	y: canvas.height * (Math.random() * 0.5 + 0.2),
+	horizon: HORIZON,
+});
+
+const entities = [sun, moon];
 
 function waterLandscape(horizon) {
 	const time = 50 * 5;
@@ -217,41 +167,65 @@ function waterLandscape(horizon) {
 
 	mountains('#6E7E85', canvas.width * 0.75, horizon, canvas.height * 0.2, 30, 5);
 
-	moveStars();
-	drawStars();
-	const sunY = window.sunY || canvas.height * (Math.random() * 0.5 + 0.2);
-	const sunX = window.sunX || canvas.width * (Math.random() * 0.15 + 0.2);
-	drawSun(sunX, sunY);
+	starField.renderStars(ctx);
+	entities.forEach(entity => {
+		entity.renderBody(ctx);
+	});
 	water(horizon, canvas.height, 25);
-	drawStarsReflection();
-	drawSunReflection(sunX, sunY, HORIZON);
+	starField.renderReflection(ctx);
+	entities.forEach(entity => {
+		entity.renderReflection(ctx);
+	})
 
 	beach('#BFB48F', canvas.width * 0.8, horizon, canvas.height, 30, 15);
 }
 
-function update() {
-	waterLandscape(HORIZON);
-
-	// requestAnimationFrame(update);
+function updateScene() {
+	starField.update();
 }
 
-requestAnimationFrame(update);
+function renderScene() {
+	waterLandscape(HORIZON);
+
+	// requestAnimationFrame(renderScene);
+}
+
+requestAnimationFrame(renderScene);
 
 document.body.addEventListener('keypress', e => {
 	if (e.keyCode === 32) {
-		update();
+		updateScene();
+		renderScene();
 	}
 });
 
 let dragging = false;
+let targetEntity = undefined;
 
-canvas.addEventListener('mousedown', () => dragging = true);
+canvas.addEventListener('mousedown', e => {
+	for (let i = 0; i < entities.length; ++i) {
+		const entity = entities[i];
+
+		if (distance(
+			entity.config.x,
+			entity.config.y,
+			e.offsetX,
+			e.offsetY
+		) < entity.config.r) {
+			targetEntity = entity;
+			dragging = true
+
+			return;
+		}
+	}
+});
 canvas.addEventListener('mouseup', () => dragging = false);
 canvas.addEventListener('mousemove', e => {
-	if (dragging) {
-		window.sunX = e.offsetX;
-		window.sunY = e.offsetY;
-		update();
+	if (dragging && targetEntity) {
+		targetEntity.config.x = e.offsetX;
+		targetEntity.config.y = e.offsetY;
+
+		renderScene();
 	}
 });
 
