@@ -82,26 +82,6 @@ function drawBuildings(colorRange, startX, n = 1) {
 	}
 }
 
-function drawClouds() {
-	const palette = new Rainbow();
-	palette.setSpectrum('#006655', '#EE6644');
-
-	for (let y = 0; y < HORIZON; ++y) {
-		if (Math.random() > 0.95) {
-			const x = Math.random() * canvas.width | 0;
-
-			ctx.fillStyle = '#' + palette.colorAt(progress(0, HORIZON, y) * 100);
-			ctx.fillRect(x, y, Math.random() * canvas.width * 0.4, 10);
-
-			if (Math.random() > 0.5) {
-				const p = progress(0, HORIZON, y)
-				ctx.fillStyle = '#' + palette.colorAt(p * 100 + (100 - (p * 100) * 0.5));
-				ctx.fillRect(x, y + 6, Math.random() * canvas.width * 0.4, 4);
-			}
-		}
-	}
-}
-
 const HORIZON_LINE = 0.7;
 const HORIZON = canvas.height * HORIZON_LINE;
 
@@ -127,6 +107,11 @@ const moon = new Planet({
 	horizon: HORIZON,
 });
 
+const clouds = new Clouds({
+	width: canvas.width,
+	horizon: HORIZON
+});
+
 const entities = [sun, moon];
 
 function waterLandscape(horizon) {
@@ -134,13 +119,13 @@ function waterLandscape(horizon) {
 
 	sunset(0, HORIZON, 40);
 
-	drawClouds();
 
 	const buildingsColorRange1 = new Rainbow();
 	buildingsColorRange1.setSpectrum('#4B6A77', '#A3966B');
 
 	const buildingsColorRange2 = new Rainbow();
 	buildingsColorRange2.setSpectrum('#6E7E85', '#BFB48F');
+	clouds.render(ctx);
 
 	mountains('#77567A', canvas.width * 0.6, horizon, canvas.height * 0.2, 10, 5);
 	drawBuildings(buildingsColorRange1, canvas.width * 0.65, 6);
