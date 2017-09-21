@@ -5,6 +5,8 @@ import {
 } from './utils';
 import StarField from './entities/star-field';
 import Planet from './entities/planet';
+import Clouds from './entities/clouds';
+import BuildingCollection from './entities/building-collection';
 
 const canvas = document.querySelector('canvas');
 const ctx = window.ctx = canvas.getContext('2d');
@@ -53,38 +55,34 @@ function mountains(color, horizonX, start, end, slope = 0, slopeMin = 0) {
 	}
 }
 
-function building(color, x, y, w, h) {
-	const spacing = 10;
-	const size = 5;
-
-	ctx.fillStyle = color;
-	ctx.fillRect(x, y - h, w, h);
-	ctx.fillStyle = '#F7CFBE';
-
-	for (var _x = 0; _x < w; _x += spacing) {
-		for (var _y = 0; _y < h - spacing; _y += spacing) {
-			ctx.fillRect(x + _x, y - h + _y, size, size);
-		}
-	}
-}
-
-function drawBuildings(colorRange, startX, n = 1) {
-	const width = 20;
-	const spacing = 20;
-
-	for(let i = 0; i < n; i++) {
-		building(
-			'#' + colorRange.colorAt(Math.random() * 100 | 0),
-			startX + spacing * i,
-			HORIZON,
-			width,
-			Math.random() * 30 + 50);
-	}
-}
-
 const HORIZON_LINE = 0.7;
 const HORIZON = canvas.height * HORIZON_LINE;
 
+const buildingsColorRange1 = new Rainbow();
+buildingsColorRange1.setSpectrum('#4B6A77', '#A3966B');
+
+const buildingsColorRange2 = new Rainbow();
+buildingsColorRange2.setSpectrum('#6E7E85', '#BFB48F');
+
+const buildingCollection1 = new BuildingCollection({
+	startX: canvas.width * 0.65,
+	ground: HORIZON,
+	width: 20,
+	spacing: 20,
+	n: 6,
+	colorRange: buildingsColorRange1
+});
+buildingCollection1.generate();
+
+const buildingCollection2 = new BuildingCollection({
+	startX: canvas.width * 0.8,
+	ground: HORIZON,
+	width: 20,
+	spacing: 20,
+	n: 6,
+	colorRange: buildingsColorRange2
+});
+buildingCollection2.generate();
 
 const starField = new StarField({
 	n: 20,
@@ -119,19 +117,13 @@ function waterLandscape(horizon) {
 
 	sunset(0, HORIZON, 40);
 
-
-	const buildingsColorRange1 = new Rainbow();
-	buildingsColorRange1.setSpectrum('#4B6A77', '#A3966B');
-
-	const buildingsColorRange2 = new Rainbow();
-	buildingsColorRange2.setSpectrum('#6E7E85', '#BFB48F');
 	clouds.render(ctx);
 
 	mountains('#77567A', canvas.width * 0.6, horizon, canvas.height * 0.2, 10, 5);
-	drawBuildings(buildingsColorRange1, canvas.width * 0.65, 6);
+	buildingCollection1.render(ctx);
 
 	mountains('#AB4E68', canvas.width * 0.65, horizon, canvas.height * 0.2, 20, 5);
-	drawBuildings(buildingsColorRange2, canvas.width * 0.8, 6);
+	buildingCollection2.render(ctx);
 
 	mountains('#6E7E85', canvas.width * 0.75, horizon, canvas.height * 0.2, 30, 5);
 
