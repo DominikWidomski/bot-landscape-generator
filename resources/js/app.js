@@ -1,4 +1,8 @@
 import Rainbow from 'rainbowvis.js';
+import {
+	progress,
+	distance
+} from './utils';
 import StarField from './entities/star-field';
 import Planet from './entities/planet';
 
@@ -7,27 +11,6 @@ const ctx = window.ctx = canvas.getContext('2d');
 
 ctx.fillStyle = '#000';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-function progress(from, to, current) {
-	return 1 - ((to - current) / (to - from));
-}
-
-/**
- * 2D distance
- *
- * @param {Number} x1
- * @param {Number} y1
- * @param {Number} x2
- * @param {Number} y2
- *
- * @return {Number}
- */
-function distance(x1, y1, x2, y2) {
-	const xD = x2 - x1;
-	const yD = y2 - y1;
-
-	return Math.sqrt((xD * xD) + (yD * yD));
-}
 
 function drawVerticalGradient(cFrom, cTo, from, to, lineStep = 50) {
 	const start = Math.min(from, to);
