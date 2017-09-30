@@ -7,6 +7,8 @@ import StarField from './entities/star-field';
 import Planet from './entities/planet';
 import Clouds from './entities/clouds';
 import BuildingCollection from './entities/building-collection';
+import VerticalGradient from './entities/vertical-gradient';
+import SkewedGradient from './entities/skewed-gradient';
 
 const canvas = document.querySelector('canvas');
 const ctx = window.ctx = canvas.getContext('2d');
@@ -14,49 +16,19 @@ const ctx = window.ctx = canvas.getContext('2d');
 ctx.fillStyle = '#000';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-function drawVerticalGradient(cFrom, cTo, from, to, lineStep = 50) {
-	const start = Math.min(from, to);
-	const end = Math.max(from, to);
-	const rainbow = new Rainbow();
-	rainbow.setSpectrum(cFrom, cTo);
-
-	for (let y = start; y <= end; y += lineStep) {
-		const p = progress(start, end, y) * 100;
-		ctx.fillStyle = '#' + rainbow.colourAt(p);
-		ctx.fillRect(0, y, canvas.width, y + lineStep);
-	}
-}
-
-const sunset = drawVerticalGradient.bind(this, '#004655', 'red');
-const water = drawVerticalGradient.bind(this, '#F29492', '#114357');
-
-function beach(color, horizonX, start, end, slope = 0, slopeMin = 0) {
-	const lineHeight = 10;
-	let lastX = horizonX;
-
-	for (let y = start; y <= end; y += lineHeight) {
-		ctx.fillStyle = color;
-		lastX -= (Math.random() * slope) + slopeMin;
-		// @TODO: Gotta watch out that y doesn't overflow the lower boundary
-		ctx.fillRect(lastX, y, canvas.width, y + lineHeight);
-	}
-}
-
-// Going UP!
-function mountains(color, horizonX, start, end, slope = 0, slopeMin = 0) {
-	const lineHeight = 5;
-	let lastX = horizonX;
-
-	for (let y = start; y >= end; y -= lineHeight) {
-		ctx.fillStyle = color;
-		lastX += (Math.random() * slope) + slopeMin;
-		// @TODO: Gotta watch out that y doesn't overflow the lower boundary
-		ctx.fillRect(lastX, y, canvas.width, y - lineHeight);
-	}
-}
-
 const HORIZON_LINE = 0.7;
 const HORIZON = canvas.height * HORIZON_LINE;
+
+const sunset = new VerticalGradient({
+	cFrom: '#004655', cTo: 'red',
+	from: 0, to: HORIZON, lineStep: 40,
+	width: canvas.width
+});
+const water = new VerticalGradient({
+	cFrom: '#F29492', cTo: '#114357',
+	from: HORIZON, to: canvas.height, lineStep: 25,
+	width: canvas.width
+});
 
 const buildingsColorRange1 = new Rainbow();
 buildingsColorRange1.setSpectrum('#4B6A77', '#A3966B');
@@ -112,32 +84,90 @@ const clouds = new Clouds({
 
 const entities = [sun, moon];
 
-function waterLandscape(horizon) {
-	const time = 50 * 5;
+const mountains1 = new SkewedGradient({
+	color: '#77567A',
+	horizonX: canvas.width * 0.6,
+	start: HORIZON,
+	end: canvas.height * 0.2,
+	slope: 10,
+	slopeMin: 5,
+	lineHeight: 5,
+	width: canvas.width,
+	direction: -1
+});
 
-	sunset(0, HORIZON, 40);
+const mountains2 = new SkewedGradient({
+	color: '#AB4E68',
+	horizonX: canvas.width * 0.65,
+	start: HORIZON,
+	end: canvas.height * 0.2,
+	slope: 20,
+	slopeMin: 5,
+	lineHeight: 5,
+	width: canvas.width,
+	direction: -1
+});
+
+const mountains3 = new SkewedGradient({
+	color: '#6E7E85',
+	horizonX: canvas.width * 0.75,
+	start: HORIZON,
+	end: canvas.height * 0.2,
+	slope: 30,
+	slopeMin: 5,
+	lineHeight: 5,
+	width: canvas.width,
+	direction: -1
+});
+
+const beach = new SkewedGradient({
+	color: '#BFB48F',
+	horizonX: canvas.width * 0.8,
+	start: HORIZON,
+	end: canvas.height,
+	slope: -30,
+	slopeMin: -15,
+	lineHeight: 10,
+	width: canvas.width,
+});
+
+const scene = entities.concat([
+	beach,
+	buildingCollection1,
+	buildingCollection2,
+	clouds,
+	mountains1,
+	mountains2,
+	mountains3,
+	starField,
+	sunset,
+	water,
+]);
+
+function waterLandscape(horizon) {
+	sunset.render(ctx);
+	starField.renderStars(ctx);
 
 	clouds.render(ctx);
 
-	mountains('#77567A', canvas.width * 0.6, horizon, canvas.height * 0.2, 10, 5);
+	mountains1.render(ctx);
 	buildingCollection1.render(ctx);
 
-	mountains('#AB4E68', canvas.width * 0.65, horizon, canvas.height * 0.2, 20, 5);
+	mountains2.render(ctx);
 	buildingCollection2.render(ctx);
 
-	mountains('#6E7E85', canvas.width * 0.75, horizon, canvas.height * 0.2, 30, 5);
+	mountains3.render(ctx);
 
-	starField.renderStars(ctx);
 	entities.forEach(entity => {
 		entity.renderBody(ctx);
 	});
-	water(horizon, canvas.height, 25);
+	water.render(ctx);
 	starField.renderReflection(ctx);
 	entities.forEach(entity => {
 		entity.renderReflection(ctx);
 	})
 
-	beach('#BFB48F', canvas.width * 0.8, horizon, canvas.height, 30, 15);
+	beach.render(ctx);
 }
 
 function updateScene() {
