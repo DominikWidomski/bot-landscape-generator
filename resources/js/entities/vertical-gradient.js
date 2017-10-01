@@ -6,7 +6,7 @@ const defaults = {
 	cTo: '#FFFFFF',
 	start: 0,
 	end: 0,
-	lineStep: 1,
+	lineStep: 1, // TODO: this can never be zero, otherwise infinite loop!!!
 };
 
 export default class VerticalGradient {
@@ -22,7 +22,7 @@ export default class VerticalGradient {
 		const start = Math.min(from, to);
 		const end = Math.max(from, to);
 		const palette = this.config.palette;
-		const lineStep = this.config.lineStep;
+		const lineStep = Math.max(1, this.config.lineStep);
 
 		// @TODO: may be too wide
 		const width = this.config.width;

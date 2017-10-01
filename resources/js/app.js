@@ -9,6 +9,7 @@ import Clouds from './entities/clouds';
 import BuildingCollection from './entities/building-collection';
 import VerticalGradient from './entities/vertical-gradient';
 import SkewedGradient from './entities/skewed-gradient';
+import Panel from './ui/panel';
 
 const canvas = document.querySelector('canvas');
 const ctx = window.ctx = canvas.getContext('2d');
@@ -30,19 +31,14 @@ const water = new VerticalGradient({
 	width: canvas.width
 });
 
-const buildingsColorRange1 = new Rainbow();
-buildingsColorRange1.setSpectrum('#4B6A77', '#A3966B');
-
-const buildingsColorRange2 = new Rainbow();
-buildingsColorRange2.setSpectrum('#6E7E85', '#BFB48F');
-
 const buildingCollection1 = new BuildingCollection({
 	startX: canvas.width * 0.65,
 	ground: HORIZON,
 	width: 20,
 	spacing: 20,
 	n: 6,
-	colorRange: buildingsColorRange1
+	colorFrom: '#4B6A77',
+	colorTo: '#A3966B',
 });
 buildingCollection1.generate();
 
@@ -52,7 +48,8 @@ const buildingCollection2 = new BuildingCollection({
 	width: 20,
 	spacing: 20,
 	n: 6,
-	colorRange: buildingsColorRange2
+	colorFrom: '#6E7E85',
+	colorTo: '#BFB48F',
 });
 buildingCollection2.generate();
 
@@ -85,6 +82,7 @@ const clouds = new Clouds({
 const entities = [sun, moon];
 
 const mountains1 = new SkewedGradient({
+	label: "Mountains 1",
 	color: '#77567A',
 	horizonX: canvas.width * 0.6,
 	start: HORIZON,
@@ -97,36 +95,39 @@ const mountains1 = new SkewedGradient({
 });
 
 const mountains2 = new SkewedGradient({
+	label: "Mountains 2",
 	color: '#AB4E68',
 	horizonX: canvas.width * 0.65,
 	start: HORIZON,
 	end: canvas.height * 0.2,
-	slope: 20,
-	slopeMin: 5,
+	slope: 5,
+	slopeVariance: 20,
 	lineHeight: 5,
 	width: canvas.width,
 	direction: -1
 });
 
 const mountains3 = new SkewedGradient({
+	label: "Mountains 3",
 	color: '#6E7E85',
 	horizonX: canvas.width * 0.75,
 	start: HORIZON,
 	end: canvas.height * 0.2,
-	slope: 30,
-	slopeMin: 5,
+	slope: 5,
+	slopeVariance: 30,
 	lineHeight: 5,
 	width: canvas.width,
 	direction: -1
 });
 
 const beach = new SkewedGradient({
+	label: "Beach",
 	color: '#BFB48F',
 	horizonX: canvas.width * 0.8,
 	start: HORIZON,
 	end: canvas.height,
-	slope: -30,
-	slopeMin: -15,
+	slope: -15,
+	slopeVariance: -30,
 	lineHeight: 10,
 	width: canvas.width,
 });
@@ -170,6 +171,14 @@ function waterLandscape(horizon) {
 	beach.render(ctx);
 }
 
+function generateScene() {
+	for (let entity of scene) {
+		if (entity.generate) {
+			entity.generate();
+		}
+	}
+}
+
 function updateScene() {
 	starField.update();
 }
@@ -181,6 +190,16 @@ function renderScene() {
 }
 
 requestAnimationFrame(renderScene);
+
+const p = new Panel();
+p.init(scene);
+p.on('change', (element, prop, oldVal, newVal) => {
+	if (element.generate) {
+		element.generate();
+	}
+
+	requestAnimationFrame(renderScene);
+});
 
 document.body.addEventListener('keypress', e => {
 	if (e.keyCode === 32) {

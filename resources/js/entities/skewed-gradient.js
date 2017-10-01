@@ -9,7 +9,7 @@ const defaults = {
 	start: 0,
 	end: 0,
 	slope: 0,
-	slopeMin: 0,
+	slopeVariance: 0,
 	direction: 1 // 1 || -1
 };
 
@@ -21,15 +21,20 @@ export default class SkewedGradient {
 		this.config.palette.setSpectrum(this.config.cFrom, this.config.cTo);
 
 		this.generate();
+
+		this.ignoreProps = [
+			'label'
+		];
 	}
 
 	generate() {
 		this.shapes = [];
 		const {
-			slope, slopeMin
+			slope, slopeVariance
 		} = this.config;
 		let { horizonX: lastX } = this.config;
 		let { start, end, lineHeight } = this.config;
+		lineHeight = Math.max(1, lineHeight);
 
 		// @TODO: it's too much, should be width of block;
 		let width = this.config.width;
@@ -45,7 +50,7 @@ export default class SkewedGradient {
 		// @TODO: Refactor
 		if (this.config.direction < 0) {
 			for (let y = end; y >= start; y -= lineHeight) {
-				lastX += ((Math.random() * slope) + slopeMin);
+				lastX += ((Math.random() * slopeVariance) + slope);
 				
 				this.shapes.push({
 					x: lastX,
@@ -54,7 +59,7 @@ export default class SkewedGradient {
 			}
 		} else {
 			for (let y = start; y <= end; y += lineHeight) {
-				lastX += ((Math.random() * slope) + slopeMin);
+				lastX += ((Math.random() * slopeVariance) + slope);
 
 				this.shapes.push({
 					x: lastX,
@@ -66,16 +71,16 @@ export default class SkewedGradient {
 
 	render(ctx) {
 		const {
-			lineHeight, color,
-			slope, slopeMin,
-			width
+			color, width,
 		} = this.config;
 		let { horizonX: lastX } = this.config;
+		let { lineHeight } = this.config;
+		lineHeight = Math.max(1, lineHeight);
 
 		for (let i = 0; i < this.shapes.length; ++i) {
 			const { x, y } = this.shapes[i];
 
-			ctx.fillStyle = this.config.color;
+			ctx.fillStyle = color;
 			// @TODO: Gotta watch out that y doesn't overflow the lower boundary
 			ctx.fillRect(x, y, width, y - lineHeight);
 		}
